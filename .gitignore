@@ -1,0 +1,16 @@
+# Go binaries
+pomo
+*.exe
+
+# Test binaries
+*.test
+
+# Coverage files
+*.out
+
+# Vim/Neovim swap files
+*.swp
+*.swo
+
+# OS junk
+.DS_Store
