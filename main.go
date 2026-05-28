@@ -38,6 +38,32 @@ func playBeep() {
 	).Run()
 }
 
+func renderUI(label string, minute int, second int, status string, cyc int) {
+	fmt.Println("====================================")
+	fmt.Println("             POMODORO              |")
+	fmt.Println("====================================")
+	if label == Work {
+		fmt.Printf("Session     :\033[31m%s\033[m                  |\n", label)
+	} else if label == Break {
+		fmt.Printf("Session     :\033[32m%s\033[m                 |\n", label)
+	}
+	fmt.Printf("Time        :%02d:%02d                 |\n", minute, second)
+	if len(strconv.Itoa(cyc)) == 1 {
+		fmt.Printf("Cycles      :%d                     |\n", cyc)
+	} else if len(strconv.Itoa(cyc)) == 2 {
+		fmt.Printf("Cycles:     :%d                    |\n", cyc)
+	} else if len(strconv.Itoa(cyc)) == 3 {
+		fmt.Printf("Cycles:     :%d                   |\n", cyc)
+	}
+	if status == "PAUSED" {
+		fmt.Printf("State       :\033[33m%s\033[m                |\n", status)
+	} else {
+		fmt.Printf("State       :\033[36m%s\033[m               |\n", status)
+	}
+	fmt.Println("====================================")
+	fmt.Print("Command (p=pause, r=resume, s=stop): ")
+}
+
 func runSession(label string, dur int, cmdChan chan Command, cyc int) bool {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
@@ -64,30 +90,7 @@ func runSession(label string, dur int, cmdChan chan Command, cyc int) bool {
 		case <-ticker.C:
 			clearScreen()
 			minute, second := formatTime(dur)
-
-			fmt.Println("====================================")
-			fmt.Println("             POMODORO              |")
-			fmt.Println("====================================")
-			if label == Work {
-				fmt.Printf("Session     :\033[31m%s\033[m                  |\n", label)
-			} else if label == Break {
-				fmt.Printf("Session     :\033[32m%s\033[m                 |\n", label)
-			}
-			fmt.Printf("Time        :%02d:%02d                 |\n", minute, second)
-			if len(strconv.Itoa(cyc)) == 1 {
-				fmt.Printf("Cycles      :%d                     |\n", cyc)
-			} else if len(strconv.Itoa(cyc)) == 2 {
-				fmt.Printf("Cycles:     :%d                    |\n", cyc)
-			} else if len(strconv.Itoa(cyc)) == 3 {
-				fmt.Printf("Cycles:     :%d                   |\n", cyc)
-			}
-			if status == "PAUSED" {
-				fmt.Printf("State       :\033[33m%s\033[m                |\n", status)
-			} else {
-				fmt.Printf("State       :\033[36m%s\033[m               |\n", status)
-			}
-			fmt.Println("====================================")
-			fmt.Print("Command (p=pause, r=resume, s=stop): ")
+			renderUI(label, minute, second, status, cyc)
 			if paused {
 				continue
 			} else {
