@@ -9,6 +9,13 @@ import (
 )
 
 type Command int
+type AppState struct {
+	Session  string
+	Status   string
+	Cycles   int
+	TimeLeft int
+	Paused   bool
+}
 
 const (
 	Work  = "WORK"
@@ -38,27 +45,28 @@ func playBeep() {
 	).Run()
 }
 
-func renderUI(label string, minute int, second int, status string, cyc int) {
+func renderUI(state AppState) {
 	fmt.Println("====================================")
 	fmt.Println("             POMODORO              |")
 	fmt.Println("====================================")
-	if label == Work {
-		fmt.Printf("Session     :\033[31m%s\033[m                  |\n", label)
-	} else if label == Break {
-		fmt.Printf("Session     :\033[32m%s\033[m                 |\n", label)
+	if state.Session == Work {
+		fmt.Printf("Session     :\033[31m%s\033[m                  |\n", state.Session)
+	} else if state.Session == Break {
+		fmt.Printf("Session     :\033[32m%s\033[m                 |\n", state.Session)
 	}
+	minute, second := formatTime(state.TimeLeft)
 	fmt.Printf("Time        :%02d:%02d                 |\n", minute, second)
-	if len(strconv.Itoa(cyc)) == 1 {
-		fmt.Printf("Cycles      :%d                     |\n", cyc)
-	} else if len(strconv.Itoa(cyc)) == 2 {
-		fmt.Printf("Cycles:     :%d                    |\n", cyc)
-	} else if len(strconv.Itoa(cyc)) == 3 {
-		fmt.Printf("Cycles:     :%d                   |\n", cyc)
+	if len(strconv.Itoa(state.Cycles)) == 1 {
+		fmt.Printf("Cycles      :%d                     |\n", state.Cycles)
+	} else if len(strconv.Itoa(state.Cycles)) == 2 {
+		fmt.Printf("Cycles:     :%d                    |\n", state.Cycles)
+	} else if len(strconv.Itoa(state.Cycles)) == 3 {
+		fmt.Printf("Cycles:     :%d                   |\n", state.Cycles)
 	}
-	if status == "PAUSED" {
-		fmt.Printf("State       :\033[33m%s\033[m                |\n", status)
+	if state.Status == "PAUSED" {
+		fmt.Printf("State       :\033[33m%s\033[m                |\n", state.Status)
 	} else {
-		fmt.Printf("State       :\033[36m%s\033[m               |\n", status)
+		fmt.Printf("State       :\033[36m%s\033[m               |\n", state.Status)
 	}
 	fmt.Println("====================================")
 	fmt.Print("Command (p=pause, r=resume, s=stop): ")
@@ -67,38 +75,45 @@ func renderUI(label string, minute int, second int, status string, cyc int) {
 func runSession(label string, dur int, cmdChan chan Command, cyc int) bool {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
-	paused := false
-	status := "RUNNING"
+	// paused := false
+	// status := "RUNNING"
+	state := AppState{
+		Session:  label,
+		Status:   "RUNNING",
+		Cycles:   cyc,
+		TimeLeft: dur,
+		Paused:   false,
+	}
 	for {
 		select {
 		case pipe := <-cmdChan:
 			switch pipe {
 			case Pause:
-				paused = true
-				status = "PAUSED"
-				// fmt.Println("\nTimer Paused")
+				// paused = true
+				// status = "PAUSED"
+				state.Paused = true
+				state.Status = "PAUSED"
 			case Resume:
-				// fmt.Println("\nResuming...")
-				status = "RUNNING"
-				paused = false
+				state.Status = "RUNNING"
+				state.Paused = false
 			case Stop:
 				// fmt.Println("\nExiting...")
-				status = "STOPPED"
+				state.Status = "STOPPED"
 				return true
 			}
 
 		case <-ticker.C:
 			clearScreen()
-			minute, second := formatTime(dur)
-			renderUI(label, minute, second, status, cyc)
-			if paused {
+			// renderUI(label, minute, second, status, cyc)
+			renderUI(state) //testing
+			if state.Paused {
 				continue
 			} else {
-				if dur >= 0 && dur < 5 {
+				if state.TimeLeft >= 0 && state.TimeLeft < 5 {
 					go playBeep()
 				}
-				dur--
-				if dur < 0 {
+				state.TimeLeft--
+				if state.TimeLeft < 0 {
 					return false
 				}
 			}
