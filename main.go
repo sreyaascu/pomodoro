@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"golang.org/x/term"
 	"os"
 	"os/exec"
 	"strconv"
@@ -29,11 +30,11 @@ const (
 	Stop
 )
 
+// Helper function
 func clearScreen() {
 	fmt.Print("\033[H\033[2J")
 }
 
-// Helper function
 func formatTime(secs int) (int, int) {
 	//Return min first and then seconds
 	return secs / 60, secs % 60
@@ -79,31 +80,31 @@ func buildProgressBar(state *AppState) string {
 }
 
 func renderUI(state *AppState) {
-	fmt.Println("====================================")
-	fmt.Println("             POMODORO              |")
-	fmt.Println("====================================")
+	fmt.Print("====================================\r\n")
+	fmt.Print("             GOMODORO              |\r\n")
+	fmt.Print("====================================\r\n")
 	if state.Session == Work {
-		fmt.Printf("Session     :\033[31m%s\033[m                  |\n", state.Session)
+		fmt.Printf("Session     :\033[31m%s\033[m                  |\r\n", state.Session)
 	} else if state.Session == Break {
-		fmt.Printf("Session     :\033[32m%s\033[m                 |\n", state.Session)
+		fmt.Printf("Session     :\033[32m%s\033[m                 |\r\n", state.Session)
 	}
 	minute, second := formatTime(state.TimeLeft)
-	fmt.Printf("Time        :%02d:%02d                 |\n", minute, second)
+	fmt.Printf("Time        :%02d:%02d                 |\r\n", minute, second)
 	if len(strconv.Itoa(state.Cycles)) == 1 {
-		fmt.Printf("Cycles      :%d                     |\n", state.Cycles)
+		fmt.Printf("Cycles      :%d                     |\r\n", state.Cycles)
 	} else if len(strconv.Itoa(state.Cycles)) == 2 {
-		fmt.Printf("Cycles:     :%d                    |\n", state.Cycles)
+		fmt.Printf("Cycles:     :%d                    |\r\n", state.Cycles)
 	} else if len(strconv.Itoa(state.Cycles)) == 3 {
-		fmt.Printf("Cycles:     :%d                   |\n", state.Cycles)
+		fmt.Printf("Cycles:     :%d                   |\r\n", state.Cycles)
 	}
 	if state.Status == "PAUSED" {
-		fmt.Printf("State       :\033[33m%s\033[m                |\n", state.Status)
+		fmt.Printf("State       :\033[33m%s\033[m                |\r\n", state.Status)
 	} else {
-		fmt.Printf("State       :\033[36m%s\033[m               |\n", state.Status)
+		fmt.Printf("State       :\033[36m%s\033[m               |\r\n", state.Status)
 	}
-	fmt.Printf("%s|\n", buildProgressBar(state))
-	fmt.Println("====================================")
-	fmt.Print("Command (p=pause, r=resume, s=stop): ")
+	fmt.Printf("%s|\r\n", buildProgressBar(state))
+	fmt.Print("====================================\r\n")
+	// fmt.Println("Command (p=pause, r=resume, s=stop): ")
 }
 
 func runSession(label string, dur int, cmdChan chan Command, cyc int) bool {
@@ -177,7 +178,11 @@ func main() {
 		return
 	}
 	cmdChan := make(chan Command, 1)
-
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		panic(err)
+	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
 	cmd := os.Args[1]
 	switch cmd {
 	case "start":
@@ -196,15 +201,15 @@ func main() {
 			return
 		}
 		go func() {
-			var inp string
+			buff := make([]byte, 1)
 			for {
-				fmt.Scanln(&inp)
-				switch inp {
-				case "p":
+				os.Stdin.Read(buff)
+				switch buff[0] {
+				case 'p':
 					cmdChan <- Pause
-				case "r":
+				case 'r':
 					cmdChan <- Resume
-				case "s":
+				case 's':
 					cmdChan <- Stop
 				}
 			}
