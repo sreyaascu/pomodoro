@@ -45,7 +45,7 @@ func playBeep() {
 	).Run()
 }
 
-func renderUI(state AppState) {
+func renderUI(state *AppState) {
 	fmt.Println("====================================")
 	fmt.Println("             POMODORO              |")
 	fmt.Println("====================================")
@@ -105,7 +105,7 @@ func runSession(label string, dur int, cmdChan chan Command, cyc int) bool {
 		case <-ticker.C:
 			clearScreen()
 			// renderUI(label, minute, second, status, cyc)
-			renderUI(state) //testing
+			renderUI(&state) //testing
 			if state.Paused {
 				continue
 			} else {
