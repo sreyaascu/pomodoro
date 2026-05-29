@@ -188,8 +188,8 @@ func main() {
 
 		wrk_time, err1 := strconv.Atoi(os.Args[2])
 		brk_time, err2 := strconv.Atoi(os.Args[3])
-		// wrk_time *= 60
-		// brk_time *= 60
+		wrk_time *= 60
+		brk_time *= 60
 
 		if err1 != nil || err2 != nil {
 			fmt.Println("Invalid Input")
