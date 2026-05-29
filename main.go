@@ -10,8 +10,8 @@ import (
 
 type Command int
 type AppState struct {
-	Session  string
-	Status   string
+	Session  string //For Work/Break
+	Status   string //For Paused/Running
 	Cycles   int
 	TimeLeft int
 	Paused   bool
@@ -36,6 +36,21 @@ func clearScreen() {
 func formatTime(secs int) (int, int) {
 	//Return min first and then seconds
 	return secs / 60, secs % 60
+}
+
+func notify(state AppState) {
+	if state.Session == Break {
+		exec.Command(
+			"notify-send",
+			"Time to get to Work",
+		).Run()
+	} else if state.Session == Work {
+		exec.Command(
+			"notify-send",
+			"Break time!!!",
+		).Run()
+
+	}
 }
 
 func playBeep() {
@@ -114,6 +129,7 @@ func runSession(label string, dur int, cmdChan chan Command, cyc int) bool {
 				}
 				state.TimeLeft--
 				if state.TimeLeft < 0 {
+					notify(state)
 					return false
 				}
 			}
