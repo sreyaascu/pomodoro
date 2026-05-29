@@ -10,11 +10,12 @@ import (
 
 type Command int
 type AppState struct {
-	Session  string
-	Status   string
-	Cycles   int
-	TimeLeft int
-	Paused   bool
+	Session   string
+	Status    string
+	Cycles    int
+	TimeLeft  int
+	TotalTime int
+	Paused    bool
 }
 
 const (
@@ -45,6 +46,23 @@ func playBeep() {
 	).Run()
 }
 
+func buildProgressBar(state *AppState) string {
+	completed := state.TotalTime - state.TimeLeft
+	perc := float64(completed) / float64(state.TotalTime)
+	barLength := 35
+	filled := int(perc * float64(barLength))
+	remaining := barLength - filled
+	bar := ""
+	for i := 0; i < filled; i++ {
+		bar += "█"
+	}
+	for i := 0; i < remaining; i++ {
+		bar += "░"
+	}
+
+	return bar
+}
+
 func renderUI(state *AppState) {
 	fmt.Println("====================================")
 	fmt.Println("             POMODORO              |")
@@ -68,6 +86,7 @@ func renderUI(state *AppState) {
 	} else {
 		fmt.Printf("State       :\033[36m%s\033[m               |\n", state.Status)
 	}
+	fmt.Printf("%s|\n", buildProgressBar(state))
 	fmt.Println("====================================")
 	fmt.Print("Command (p=pause, r=resume, s=stop): ")
 }
@@ -78,11 +97,12 @@ func runSession(label string, dur int, cmdChan chan Command, cyc int) bool {
 	// paused := false
 	// status := "RUNNING"
 	state := AppState{
-		Session:  label,
-		Status:   "RUNNING",
-		Cycles:   cyc,
-		TimeLeft: dur,
-		Paused:   false,
+		Session:   label,
+		Status:    "RUNNING",
+		Cycles:    cyc,
+		TimeLeft:  dur,
+		TotalTime: dur,
+		Paused:    false,
 	}
 	for {
 		select {
