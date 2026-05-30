@@ -6,6 +6,7 @@ import (
 	"golang.org/x/term"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"time"
 )
@@ -210,8 +211,18 @@ func main() {
 	case "start":
 		if len(os.Args) < 4 {
 			// fmt.Println("Usage: go run . <work_time> <break_time>")
+			home, home_err := os.UserHomeDir()
+			if home_err != nil {
+				fmt.Println(home_err)
+			}
+			config_path := filepath.Join(
+				home,
+				".config",
+				"gomodoro",
+				"config.json",
+			)
 			// return
-			data, read_err := os.ReadFile("config.json")
+			data, read_err := os.ReadFile(config_path)
 			if read_err != nil {
 				fmt.Println("Error reading config file")
 				return
