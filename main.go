@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"golang.org/x/term"
 	"os"
@@ -17,6 +18,12 @@ type AppState struct {
 	TimeLeft  int
 	TotalTime int
 	Paused    bool
+}
+type Config struct {
+	WorkMinutes   int  `json:"work_minutes"`
+	BreakMinutes  int  `json:"break_minutes"`
+	Sound         bool `json:"sound"`
+	Notifications bool `json:"notifications"`
 }
 
 const (
@@ -173,21 +180,46 @@ func runPomodoro(wrk int, brk int, cmdChan chan Command) {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run . <work_time> <break_time>")
-		return
-	}
+	var config Config
 	cmdChan := make(chan Command, 1)
+	go func() {
+		buff := make([]byte, 1)
+		for {
+			os.Stdin.Read(buff)
+			switch buff[0] {
+			case 'p':
+				cmdChan <- Pause
+			case 'r':
+				cmdChan <- Resume
+			case 's':
+				cmdChan <- Stop
+			}
+		}
+	}()
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		panic(err)
 	}
 	defer term.Restore(int(os.Stdin.Fd()), oldState)
+	if len(os.Args) < 2 {
+		fmt.Println("Usage: pomo start <work_minutes> <break_minutes>")
+		return
+	}
 	cmd := os.Args[1]
 	switch cmd {
 	case "start":
 		if len(os.Args) < 4 {
-			fmt.Println("Usage: go run . <work_time> <break_time>")
+			// fmt.Println("Usage: go run . <work_time> <break_time>")
+			// return
+			data, read_err := os.ReadFile("config.json")
+			if read_err != nil {
+				fmt.Println("Error reading config file")
+				return
+			}
+			json.Unmarshal(data, &config)
+			// fmt.Println("Usage: go run . <work_time> <break_time>")
+			// return
+			runPomodoro(config.WorkMinutes*60, config.BreakMinutes*60, cmdChan)
 			return
 		}
 
@@ -200,20 +232,6 @@ func main() {
 			fmt.Println("Invalid Input")
 			return
 		}
-		go func() {
-			buff := make([]byte, 1)
-			for {
-				os.Stdin.Read(buff)
-				switch buff[0] {
-				case 'p':
-					cmdChan <- Pause
-				case 'r':
-					cmdChan <- Resume
-				case 's':
-					cmdChan <- Stop
-				}
-			}
-		}()
 		runPomodoro(wrk_time, brk_time, cmdChan)
 	}
 }
