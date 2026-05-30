@@ -1,7 +1,7 @@
 build:
 	go build -o pomo
 
-install:
+install: build
 	sudo cp pomo /usr/local/bin/ 
 
 run:
