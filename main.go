@@ -11,6 +11,18 @@ import (
 	"time"
 )
 
+func printHelp() {
+	fmt.Printf("GOMODORO\r\n")
+	// fmt.Println()
+	fmt.Printf("\nUsage:\r\n")
+	fmt.Printf("pomo start [work] [break]\r\n")
+	// fmt.Printf()
+	fmt.Printf("\nCommands:\r\n")
+	fmt.Printf("  start       Start a pomodoro session\r\n")
+	fmt.Printf("  --help      Show help\r\n")
+	fmt.Printf("  --version   Show version\r\n")
+}
+
 type Command int
 type AppState struct {
 	Session   string //For Break/Work
@@ -210,7 +222,6 @@ func main() {
 	switch cmd {
 	case "start":
 		if len(os.Args) < 4 {
-			// fmt.Println("Usage: go run . <work_time> <break_time>")
 			home, home_err := os.UserHomeDir()
 			if home_err != nil {
 				fmt.Println(home_err)
@@ -232,17 +243,26 @@ func main() {
 			// return
 			runPomodoro(config.WorkMinutes*60, config.BreakMinutes*60, cmdChan)
 			return
-		}
+		} else {
 
-		wrk_time, err1 := strconv.Atoi(os.Args[2])
-		brk_time, err2 := strconv.Atoi(os.Args[3])
-		wrk_time *= 60
-		brk_time *= 60
+			wrk_time, err1 := strconv.Atoi(os.Args[2])
+			brk_time, err2 := strconv.Atoi(os.Args[3])
+			wrk_time *= 60
+			brk_time *= 60
 
-		if err1 != nil || err2 != nil {
-			fmt.Println("Invalid Input")
-			return
+			if err1 != nil || err2 != nil {
+				fmt.Println("Invalid Input")
+				return
+			}
+			runPomodoro(wrk_time, brk_time, cmdChan)
 		}
-		runPomodoro(wrk_time, brk_time, cmdChan)
+	case "--help":
+		printHelp()
+		return
+	case "--version":
+		fmt.Printf("Gomodoro v1.0.0\r\n")
+		return
+	default:
+		fmt.Println("Unknown command")
 	}
 }
